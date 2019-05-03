@@ -98,6 +98,15 @@ enableLogFile() {
 	sed -i -e"s,^#LogFile,LogFile," $PROXY_CONF
 }
 
+enableBasicAuth(){
+    if [ -z ${BASIC_AUTH_USERNAME+x} ]; then
+        echo "Basic Authentication disabled."
+    else
+        echo "Basic Authentication enabled."
+        echo "BasicAuth $BASIC_AUTH_USERNAME $BASIC_AUTH_PASSWORD" >> $PROXY_CONF
+    fi
+}
+
 setAccess() {
     if [[ "$1" == *ANY* ]]; then
         sed -i -e"s/^Allow /#Allow /" $PROXY_CONF
@@ -112,7 +121,7 @@ setAccess() {
 
 startService() {
     screenOut "Starting Tinyproxy service..."
-    /usr/sbin/tinyproxy
+    /usr/bin/tinyproxy
     checkStatus $? "Could not start Tinyproxy service." \
                    "Tinyproxy service started successfully."
 }
@@ -135,6 +144,8 @@ echo && screenOut "$PROG_NAME script started..."
 stopService
 # Parse ACL from args
 export rawRules="$@" && parsedRules=$(parseAccessRules $rawRules) && unset rawRules
+#Set Basic Auth
+enableBasicAuth
 # Set ACL in Tinyproxy config
 setAccess $parsedRules
 # Enable log to file
